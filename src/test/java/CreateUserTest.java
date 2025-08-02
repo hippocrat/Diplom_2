@@ -1,4 +1,5 @@
 import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.*;
 
@@ -7,22 +8,27 @@ import static org.hamcrest.Matchers.equalTo;
 
 public class CreateUserTest {
 
+    private static String baseUri = "https://stellarburgers.nomoreparties.site";
+    String email = "tteesstt-data@yandex.ru";
+    String password = "kassian";
+    String name = "WhiteWolf";
+
     @BeforeEach
     public void setUp() {
-        RestAssured.baseURI = "https://stellarburgers.nomoreparties.site";
+        RestAssured.baseURI = baseUri;
     }
 
     @Test
     @DisplayName("Создание нового уникального пользователя, ожидаем ответ 200")
     public void createNewUserSuccess() {
         String requestBody = "{\n" +
-                "  \"email\": \"tteesstt-data@yandex.ru\",\n" +
-                "  \"password\": \"kassian\",\n" +
-                "  \"name\": \"WhiteWolf\"\n" +
+                "  \"email\": \"" + email + "\",\n" +
+                "  \"password\": \"" + password + "\",\n" +
+                "  \"name\": \"" + name + "\"\n" +
                 "}";
 
         given()
-                .header("Content-type", "application/json")
+                .contentType(ContentType.JSON)
                 .body(requestBody)
                 .when()
                 .post("/api/auth/register")
@@ -34,13 +40,13 @@ public class CreateUserTest {
     @DisplayName("Создание пользователя который уже есть в системе, ожидаем ответ 403")
     public void createUserAlreadyExistsReturnsError() {
         String requestBody = "{\n" +
-                "  \"email\": \"tteesstt-data@yandex.ru\",\n" +
-                "  \"password\": \"kassian\",\n" +
-                "  \"name\": \"WhiteWolf\"\n" +
+                "  \"email\": \"" + email + "\",\n" +
+                "  \"password\": \"" + password + "\",\n" +
+                "  \"name\": \"" + name + "\"\n" +
                 "}";
 
         given()
-                .header("Content-type", "application/json")
+                .contentType(ContentType.JSON)
                 .body(requestBody)
                 .when()
                 .post("/api/auth/register");
@@ -57,12 +63,12 @@ public class CreateUserTest {
     @DisplayName("Создание пользователя без обязательного поля email, ожидаем ответ 403")
     public void createUserWithoutEmailReturnsError() {
         String requestBody = "{\n" +
-                "  \"password\": \"kassian\",\n" +
-                "  \"name\": \"WhiteWolf\"\n" +
+                "  \"password\": \"" + password + "\",\n" +
+                "  \"name\": \"" + name + "\"\n" +
                 "}";
 
         given()
-                .header("Content-type", "application/json")
+                .contentType(ContentType.JSON)
                 .body(requestBody)
                 .when()
                 .post("/api/auth/register")
@@ -74,13 +80,13 @@ public class CreateUserTest {
     @AfterEach
     public void tearDown() {
         String requestBody = "{\n" +
-                "  \"email\": \"tteesstt-data@yandex.ru\",\n" +
-                "  \"password\": \"kassian\"\n" +
+                "  \"email\": \"" + email + "\",\n" +
+                "  \"password\": \"" + password + "\"\n" +
                 "}";
 
         Response response =
                 given()
-                        .header("Content-type", "application/json")
+                        .contentType(ContentType.JSON)
                         .body(requestBody)
                         .when()
                         .post("/api/auth/login");
@@ -89,7 +95,9 @@ public class CreateUserTest {
             token = token.substring(7);
             given()
                     .auth().oauth2(token)
-                    .delete("/api/auth/user");
+                    .delete("/api/auth/user")
+                    .then()
+                    .statusCode(202);
         }
     }
 }
