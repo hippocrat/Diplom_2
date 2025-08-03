@@ -1,7 +1,9 @@
+import io.qameta.allure.Step;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -17,10 +19,11 @@ public class CreateOrderTest {
     @BeforeAll
     public static void setup() {
         RestAssured.baseURI = BASE_URL;
+        accessToken = loginAndGetAccessToken("hilokea@yandex.ru", "kassian");
+    }
 
-        String email = "hilokea@yandex.ru";
-        String password = "kassian";
-
+    @Step("Логин и получение токена")
+    private static String loginAndGetAccessToken(String email, String password) {
         Response loginResponse = given()
                 .contentType(ContentType.JSON)
                 .body("{\"email\": \"" + email + "\", \"password\": \"" + password + "\"}")
@@ -28,34 +31,65 @@ public class CreateOrderTest {
                 .post("/api/auth/login");
 
         loginResponse.then().statusCode(200);
-        accessToken = loginResponse.jsonPath().getString("accessToken");
+        return loginResponse.jsonPath().getString("accessToken");
     }
 
     @Test
+    @DisplayName("Создание заказа с авторизацией и валидными ингредиентами")
     public void testCreateOrderWithAuthorizationAndValidIngredients() {
         OrderRequest orderRequest = new OrderRequest(
                 List.of("61c0c5a71d1f82001bdaaa70", "61c0c5a71d1f82001bdaaa6c")
         );
-
-        given()
-                .header("Authorization", accessToken)
-                .contentType(ContentType.JSON)
-                .body(orderRequest)
-                .when()
-                .post("/api/orders")
-                .then()
-                .statusCode(200)
-                .body("success", is(true))
-                .body("name", notNullValue())
-                .body("order.number", notNullValue());
+        createOrderWithAuth(orderRequest);
     }
 
     @Test
+    @DisplayName("Создание заказа без авторизации и валидными ингредиентами")
     public void testCreateOrderWithoutAuthorizationWithValidIngredients() {
         OrderRequest orderRequest = new OrderRequest(
                 List.of("61c0c5a71d1f82001bdaaa70", "61c0c5a71d1f82001bdaaa6c")
         );
+        createOrderWithoutAuth(orderRequest);
+    }
 
+    @Test
+    @DisplayName("Создание заказа с авторизацией без ингредиентов")
+    public void testCreateOrderWithAuthorizationWithoutIngredients() {
+        OrderRequest orderRequest = new OrderRequest();
+        createInvalidOrderWithAuth(orderRequest, 400, "Ingredient ids must be provided");
+    }
+
+    @Test
+    @DisplayName("Создание заказа без авторизации без ингредиентов")
+    public void testCreateOrderWithoutAuthorizationWithoutIngredients() {
+        OrderRequest orderRequest = new OrderRequest();
+        createInvalidOrderWithoutAuth(orderRequest, 400, "Ingredient ids must be provided");
+    }
+
+    @Test
+    @DisplayName("Создание заказа с невалидными зэшами ингредиентов")
+    public void testCreateOrderWithInvalidIngredientHash() {
+        OrderRequest orderRequest = new OrderRequest(List.of("61c0c5a71d1f82001bdaaa700"));
+        createOrderExpectingStatusWithAuth(orderRequest, 500);
+    }
+
+    @Step("Создать заказ с авториацией")
+    private void createOrderWithAuth(OrderRequest orderRequest) {
+        given()
+                .header("Authorization", accessToken)
+                .contentType(ContentType.JSON)
+                .body(orderRequest)
+                .when()
+                .post("/api/orders")
+                .then()
+                .statusCode(200)
+                .body("success", is(true))
+                .body("name", notNullValue())
+                .body("order.number", notNullValue());
+    }
+
+    @Step("Создать заказ без авторизации")
+    private void createOrderWithoutAuth(OrderRequest orderRequest) {
         given()
                 .contentType(ContentType.JSON)
                 .body(orderRequest)
@@ -68,10 +102,8 @@ public class CreateOrderTest {
                 .body("order.number", notNullValue());
     }
 
-    @Test
-    public void testCreateOrderWithAuthorizationWithoutIngredients() {
-        OrderRequest orderRequest = new OrderRequest();
-
+    @Step("Создать заказ с авторизацией со статус кодом {expectedStatus}")
+    private void createInvalidOrderWithAuth(OrderRequest orderRequest, int expectedStatus, String expectedMessage) {
         given()
                 .header("Authorization", accessToken)
                 .contentType(ContentType.JSON)
@@ -79,30 +111,26 @@ public class CreateOrderTest {
                 .when()
                 .post("/api/orders")
                 .then()
-                .statusCode(400)
+                .statusCode(expectedStatus)
                 .body("success", is(false))
-                .body("message", equalTo("Ingredient ids must be provided"));
+                .body("message", equalTo(expectedMessage));
     }
 
-    @Test
-    public void testCreateOrderWithoutAuthorizationWithoutIngredients() {
-        OrderRequest orderRequest = new OrderRequest();
-
+    @Step("Создать заказ без авторизации со статус кодом {expectedStatus}")
+    private void createInvalidOrderWithoutAuth(OrderRequest orderRequest, int expectedStatus, String expectedMessage) {
         given()
                 .contentType(ContentType.JSON)
                 .body(orderRequest)
                 .when()
                 .post("/api/orders")
                 .then()
-                .statusCode(400)
+                .statusCode(expectedStatus)
                 .body("success", is(false))
-                .body("message", equalTo("Ingredient ids must be provided"));
+                .body("message", equalTo(expectedMessage));
     }
 
-    @Test
-    public void testCreateOrderWithInvalidIngredientHash() {
-        OrderRequest orderRequest = new OrderRequest(List.of("61c0c5a71d1f82001bdaaa700"));
-
+    @Step("Создать заказ с невалидными ингридиентами со статус кодом {expectedStatus}")
+    private void createOrderExpectingStatusWithAuth(OrderRequest orderRequest, int expectedStatus) {
         given()
                 .header("Authorization", accessToken)
                 .contentType(ContentType.JSON)
@@ -110,6 +138,6 @@ public class CreateOrderTest {
                 .when()
                 .post("/api/orders")
                 .then()
-                .statusCode(500);
+                .statusCode(expectedStatus);
     }
 }

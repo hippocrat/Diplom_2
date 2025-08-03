@@ -1,3 +1,4 @@
+import io.qameta.allure.Step;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
@@ -21,17 +22,7 @@ public class CreateUserTest {
     @Test
     @DisplayName("Создание нового уникального пользователя, ожидаем ответ 200")
     public void createNewUserSuccess() {
-        String requestBody = "{\n" +
-                "  \"email\": \"" + email + "\",\n" +
-                "  \"password\": \"" + password + "\",\n" +
-                "  \"name\": \"" + name + "\"\n" +
-                "}";
-
-        given()
-                .contentType(ContentType.JSON)
-                .body(requestBody)
-                .when()
-                .post("/api/auth/register")
+        registerUser(email, password, name)
                 .then()
                 .statusCode(200);
     }
@@ -39,22 +30,8 @@ public class CreateUserTest {
     @Test
     @DisplayName("Создание пользователя который уже есть в системе, ожидаем ответ 403")
     public void createUserAlreadyExistsReturnsError() {
-        String requestBody = "{\n" +
-                "  \"email\": \"" + email + "\",\n" +
-                "  \"password\": \"" + password + "\",\n" +
-                "  \"name\": \"" + name + "\"\n" +
-                "}";
-
-        given()
-                .contentType(ContentType.JSON)
-                .body(requestBody)
-                .when()
-                .post("/api/auth/register");
-        given()
-                .header("Content-type", "application/json")
-                .body(requestBody)
-                .when()
-                .post("/api/auth/register")
+        registerUser(email, password, name);
+        registerUser(email, password, name)
                 .then()
                 .statusCode(403);
     }
@@ -67,11 +44,7 @@ public class CreateUserTest {
                 "  \"name\": \"" + name + "\"\n" +
                 "}";
 
-        given()
-                .contentType(ContentType.JSON)
-                .body(requestBody)
-                .when()
-                .post("/api/auth/register")
+        sendRegisterRequest(requestBody)
                 .then()
                 .statusCode(403)
                 .body("message", equalTo("Email, password and name are required fields"));
@@ -84,20 +57,49 @@ public class CreateUserTest {
                 "  \"password\": \"" + password + "\"\n" +
                 "}";
 
-        Response response =
-                given()
-                        .contentType(ContentType.JSON)
-                        .body(requestBody)
-                        .when()
-                        .post("/api/auth/login");
+        Response response = loginUser(requestBody);
         String token = response.jsonPath().getString("accessToken");
         if (token != null && token.startsWith("Bearer ")) {
             token = token.substring(7);
-            given()
-                    .auth().oauth2(token)
-                    .delete("/api/auth/user")
-                    .then()
-                    .statusCode(202);
+            deleteUser(token);
         }
+    }
+
+    @Step("Регистрация пользователя с email: {email}, password: {password}, name: {name}")
+    public Response registerUser(String email, String password, String name) {
+        String requestBody = "{\n" +
+                "  \"email\": \"" + email + "\",\n" +
+                "  \"password\": \"" + password + "\",\n" +
+                "  \"name\": \"" + name + "\"\n" +
+                "}";
+        return sendRegisterRequest(requestBody);
+    }
+
+    @Step("Отправка запроса на регистрацию пользователя")
+    public Response sendRegisterRequest(String requestBody) {
+        return given()
+                .contentType(ContentType.JSON)
+                .body(requestBody)
+                .when()
+                .post("/api/auth/register");
+    }
+
+    @Step("Авторизация пользователя")
+    public Response loginUser(String requestBody) {
+        return given()
+                .contentType(ContentType.JSON)
+                .body(requestBody)
+                .when()
+                .post("/api/auth/login");
+    }
+
+    @Step("Удаление пользователя с accessToken")
+    public void deleteUser(String token) {
+        given()
+                .auth().oauth2(token)
+                .when()
+                .delete("/api/auth/user")
+                .then()
+                .statusCode(202);
     }
 }

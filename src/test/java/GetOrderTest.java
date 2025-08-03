@@ -1,3 +1,4 @@
+import io.qameta.allure.Step;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
@@ -20,6 +21,11 @@ public class GetOrderTest {
         String email = "hilokea@yandex.ru";
         String password = "kassian";
 
+        accessToken = loginAndGetToken(email, password);
+    }
+
+    @Step("Логин пользователя и получение accessToken")
+    private static String loginAndGetToken(String email, String password) {
         Response loginResponse = given()
                 .contentType(ContentType.JSON)
                 .body("{\"email\": \"" + email + "\", \"password\": \"" + password + "\"}")
@@ -27,14 +33,19 @@ public class GetOrderTest {
                 .post("/api/auth/login");
 
         loginResponse.then().statusCode(200);
-        accessToken = loginResponse.jsonPath().getString("accessToken");
+        return loginResponse.jsonPath().getString("accessToken");
     }
 
     @Test
     @DisplayName("Получение заказов авторизованным пользователем")
     public void getOrdersWithAuthShouldReturn200() {
-         given()
-                .header("Authorization", accessToken)
+        getOrdersWithAuth(accessToken);
+    }
+
+    @Step("Отправка запроса на получение заказов с токеном авторизации")
+    private void getOrdersWithAuth(String token) {
+        given()
+                .header("Authorization", token)
                 .when()
                 .get("/api/orders")
                 .then()
@@ -49,6 +60,11 @@ public class GetOrderTest {
     @Test
     @DisplayName("Получение заказов неавторизованным пользователем")
     public void getOrdersWithoutAuthShouldReturn401() {
+        getOrdersWithoutAuth();
+    }
+
+    @Step("Отправка запроса на получение заказов без авторизации")
+    private void getOrdersWithoutAuth() {
         given()
                 .when()
                 .get("/api/orders")
