@@ -1,5 +1,5 @@
+import configs.BaseTest;
 import io.qameta.allure.Step;
-import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.*;
@@ -9,17 +9,11 @@ import requests.SignUpRequest;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
-public class CreateUserTest {
+public class CreateUserTest extends BaseTest {
 
-    private static String baseUri = "https://stellarburgers.nomoreparties.site";
     String email = "tteesstt-data@yandex.ru";
     String password = "kassian";
     String name = "WhiteWolf";
-
-    @BeforeEach
-    public void setUp() {
-        RestAssured.baseURI = baseUri;
-    }
 
     @Test
     @DisplayName("Создание нового уникального пользователя, ожидаем ответ 200")

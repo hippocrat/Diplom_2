@@ -1,5 +1,5 @@
+import configs.BaseTest;
 import io.qameta.allure.Step;
-import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.BeforeAll;
@@ -13,14 +13,12 @@ import java.util.List;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
-public class CreateOrderTest {
+public class CreateOrderTest extends BaseTest {
 
-    private static final String BASE_URL = "https://stellarburgers.nomoreparties.site";
     private static String accessToken;
 
     @BeforeAll
     public static void setup() {
-        RestAssured.baseURI = BASE_URL;
         accessToken = loginAndGetAccessToken("hilokea@yandex.ru", "kassian");
     }
 

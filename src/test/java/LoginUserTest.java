@@ -1,6 +1,5 @@
+import configs.BaseTest;
 import io.qameta.allure.Step;
-import io.restassured.RestAssured;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import requests.LoginRequest;
@@ -8,12 +7,7 @@ import requests.LoginRequest;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
-public class LoginUserTest {
-
-    @BeforeEach
-    public void setUp() {
-        RestAssured.baseURI = "https://stellarburgers.nomoreparties.site";
-    }
+public class LoginUserTest extends BaseTest {
 
     @Test
     @DisplayName("Логин под существующим пользователем, ожидаем ответ 200")

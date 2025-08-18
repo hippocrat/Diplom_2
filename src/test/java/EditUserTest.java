@@ -1,5 +1,6 @@
+import com.fasterxml.jackson.databind.ser.Serializers;
+import configs.BaseTest;
 import io.qameta.allure.Step;
-import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.*;
@@ -9,15 +10,12 @@ import requests.SignUpRequest;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
-public class EditUserTest {
+public class EditUserTest extends BaseTest {
 
-    private static String baseUri = "https://stellarburgers.nomoreparties.site";
     private static String accessToken;
 
     @BeforeAll
     public static void setUp() {
-        RestAssured.baseURI = baseUri;
-
         String email = "lecroissant@yandex.ru";
         String password = "adb123";
         String name = "leCroissant";
