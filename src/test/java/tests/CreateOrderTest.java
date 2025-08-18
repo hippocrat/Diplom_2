@@ -7,6 +7,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import requests.OrderRequest;
 import steps.AuthSteps;
+import steps.GetOrderSteps;
 import steps.OrderSteps;
 
 import java.util.List;
@@ -15,6 +16,7 @@ public class CreateOrderTest extends BaseTest {
 
     private static String accessToken;
     private OrderSteps orderSteps;
+    private GetOrderSteps getOrderSteps;
 
     @BeforeAll
     public static void setup() {
@@ -30,18 +32,14 @@ public class CreateOrderTest extends BaseTest {
     @Test
     @DisplayName("Создание заказа с авторизацией и валидными ингредиентами")
     public void testCreateOrderWithAuthorizationAndValidIngredients() {
-        OrderRequest orderRequest = new OrderRequest(
-                List.of("61c0c5a71d1f82001bdaaa70", "61c0c5a71d1f82001bdaaa6c")
-        );
+        OrderRequest orderRequest = new OrderRequest(getOrderSteps.getAllOrders());
         orderSteps.createOrderWithAuth(orderRequest);
     }
 
     @Test
     @DisplayName("Создание заказа без авторизации и валидными ингредиентами")
     public void testCreateOrderWithoutAuthorizationWithValidIngredients() {
-        OrderRequest orderRequest = new OrderRequest(
-                List.of("61c0c5a71d1f82001bdaaa70", "61c0c5a71d1f82001bdaaa6c")
-        );
+        OrderRequest orderRequest = new OrderRequest(getOrderSteps.getAllOrders());
         orderSteps.createOrderWithoutAuth(orderRequest);
     }
 
@@ -60,7 +58,7 @@ public class CreateOrderTest extends BaseTest {
     }
 
     @Test
-    @DisplayName("Создание заказа с невалидными зэшами ингредиентов")
+    @DisplayName("Создание заказа с невалидными хэшами ингредиентов")
     public void testCreateOrderWithInvalidIngredientHash() {
         OrderRequest orderRequest = new OrderRequest(List.of("61c0c5a71d1f82001bdaaa700"));
         orderSteps.createOrderExpectingStatusWithAuth(orderRequest, 500);

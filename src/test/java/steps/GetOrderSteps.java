@@ -1,6 +1,9 @@
 package steps;
 
 import io.qameta.allure.Step;
+import io.restassured.response.Response;
+
+import java.util.List;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
@@ -32,5 +35,19 @@ public class GetOrderSteps {
                 .statusCode(401)
                 .body("success", equalTo(false))
                 .body("message", equalTo("You should be authorised"));
+    }
+
+    @Step("Отправка запроса на получение всех заказов")
+    public List<String> getAllOrders() {
+        Response response = given()
+                .when()
+                .get("/api/orders/all")
+                .then()
+                .statusCode(200)
+                .extract()
+                .response();
+
+        List<String> ingredientsFirstOrder = response.path("orders[0].ingredients");
+        return ingredientsFirstOrder;
     }
 }
