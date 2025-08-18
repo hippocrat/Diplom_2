@@ -1,3 +1,5 @@
+package tests;
+
 import configs.BaseTest;
 import io.qameta.allure.Step;
 import org.junit.jupiter.api.DisplayName;
