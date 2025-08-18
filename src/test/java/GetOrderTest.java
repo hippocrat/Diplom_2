@@ -5,6 +5,7 @@ import io.restassured.response.Response;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import requests.LoginRequest;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
@@ -26,9 +27,10 @@ public class GetOrderTest {
 
     @Step("Логин пользователя и получение accessToken")
     private static String loginAndGetToken(String email, String password) {
+        LoginRequest loginRequest = new LoginRequest(email, password);
         Response loginResponse = given()
                 .contentType(ContentType.JSON)
-                .body("{\"email\": \"" + email + "\", \"password\": \"" + password + "\"}")
+                .body(loginRequest)
                 .when()
                 .post("/api/auth/login");
 

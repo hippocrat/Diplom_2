@@ -3,6 +3,8 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.*;
+import requests.LoginRequest;
+import requests.SignUpRequest;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
@@ -26,9 +28,10 @@ public class EditUserTest {
 
     @Step("Регистрация пользователя с email: {0}, name: {2}")
     public static void registerUser(String email, String password, String name) {
+        SignUpRequest signUpRequest = new SignUpRequest(email, password, name);
         given()
                 .contentType(ContentType.JSON)
-                .body("{\"email\": \"" + email + "\", \"password\": \"" + password + "\", \"name\": \"" + name + "\"}")
+                .body(signUpRequest)
                 .when()
                 .post("/api/auth/register")
                 .then()
@@ -37,9 +40,10 @@ public class EditUserTest {
 
     @Step("Логин пользователя с email: {0}")
     public static String loginAndGetToken(String email, String password) {
+        LoginRequest loginRequest = new LoginRequest(email,password);
         Response loginResponse = given()
                 .contentType(ContentType.JSON)
-                .body("{\"email\": \"" + email + "\", \"password\": \"" + password + "\"}")
+                .body(loginRequest)
                 .when()
                 .post("/api/auth/login");
 
@@ -55,10 +59,11 @@ public class EditUserTest {
 
     @Step("Обновление пользователя с токеном авторизации")
     public void updateUser(String email, String name, String password, String token) {
+        SignUpRequest signUpRequest = new SignUpRequest(email, name, password);
         given()
                 .header("Authorization", token)
                 .contentType(ContentType.JSON)
-                .body("{\"email\": \"" + email + "\", \"name\": \"" + name + "\", \"password\": \"" + password + "\"}")
+                .body(signUpRequest)
                 .when()
                 .patch("/api/auth/user")
                 .then()

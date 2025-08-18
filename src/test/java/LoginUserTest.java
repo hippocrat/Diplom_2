@@ -3,6 +3,7 @@ import io.restassured.RestAssured;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import requests.LoginRequest;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
@@ -17,7 +18,7 @@ public class LoginUserTest {
     @Test
     @DisplayName("Логин под существующим пользователем, ожидаем ответ 200")
     public void loginWithUserExistsSuccess() {
-        String requestBody = createLoginRequestBody("hilokea@yandex.ru", "kassian");
+        LoginRequest requestBody = createLoginRequestBody("hilokea@yandex.ru", "kassian");
         sendLoginRequest(requestBody)
                 .then()
                 .statusCode(200);
@@ -26,7 +27,7 @@ public class LoginUserTest {
     @Test
     @DisplayName("Логин с неверным логином и паролем")
     public void loginWithWrongEmailAndPasswordReturnsError() {
-        String requestBody = createLoginRequestBody("hilokeo@yandex.ru", "kasian");
+        LoginRequest requestBody = createLoginRequestBody("hilokeo@yandex.ru", "kasian");
         sendLoginRequest(requestBody)
                 .then()
                 .statusCode(401)
@@ -34,15 +35,12 @@ public class LoginUserTest {
     }
 
     @Step("Создание тела запроса для логина: email = {email}, password = {password}")
-    private String createLoginRequestBody(String email, String password) {
-        return "{\n" +
-                "  \"email\": \"" + email + "\",\n" +
-                "  \"password\": \"" + password + "\"\n" +
-                "}";
+    private LoginRequest createLoginRequestBody(String email, String password) {
+        return new LoginRequest(email,password);
     }
 
     @Step("Отправка запроса на логин")
-    private io.restassured.response.Response sendLoginRequest(String requestBody) {
+    private io.restassured.response.Response sendLoginRequest(LoginRequest requestBody) {
         return given()
                 .header("Content-type", "application/json")
                 .body(requestBody)

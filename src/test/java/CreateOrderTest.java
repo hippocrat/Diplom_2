@@ -5,6 +5,8 @@ import io.restassured.response.Response;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import requests.LoginRequest;
+import requests.OrderRequest;
 
 import java.util.List;
 
@@ -24,9 +26,10 @@ public class CreateOrderTest {
 
     @Step("Логин и получение токена")
     private static String loginAndGetAccessToken(String email, String password) {
+        LoginRequest loginRequest = new LoginRequest(email, password);
         Response loginResponse = given()
                 .contentType(ContentType.JSON)
-                .body("{\"email\": \"" + email + "\", \"password\": \"" + password + "\"}")
+                .body(loginRequest)
                 .when()
                 .post("/api/auth/login");
 

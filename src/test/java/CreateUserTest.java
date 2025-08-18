@@ -3,6 +3,8 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.*;
+import requests.LoginRequest;
+import requests.SignUpRequest;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
@@ -39,12 +41,8 @@ public class CreateUserTest {
     @Test
     @DisplayName("Создание пользователя без обязательного поля email, ожидаем ответ 403")
     public void createUserWithoutEmailReturnsError() {
-        String requestBody = "{\n" +
-                "  \"password\": \"" + password + "\",\n" +
-                "  \"name\": \"" + name + "\"\n" +
-                "}";
-
-        sendRegisterRequest(requestBody)
+        SignUpRequest signUpRequest = new SignUpRequest(password, name);
+        sendRegisterRequest(signUpRequest)
                 .then()
                 .statusCode(403)
                 .body("message", equalTo("Email, password and name are required fields"));
@@ -52,12 +50,8 @@ public class CreateUserTest {
 
     @AfterEach
     public void tearDown() {
-        String requestBody = "{\n" +
-                "  \"email\": \"" + email + "\",\n" +
-                "  \"password\": \"" + password + "\"\n" +
-                "}";
-
-        Response response = loginUser(requestBody);
+        LoginRequest loginRequest = new LoginRequest(email, password);
+        Response response = loginUser(loginRequest);
         String token = response.jsonPath().getString("accessToken");
         if (token != null && token.startsWith("Bearer ")) {
             token = token.substring(7);
@@ -67,16 +61,12 @@ public class CreateUserTest {
 
     @Step("Регистрация пользователя с email: {email}, password: {password}, name: {name}")
     public Response registerUser(String email, String password, String name) {
-        String requestBody = "{\n" +
-                "  \"email\": \"" + email + "\",\n" +
-                "  \"password\": \"" + password + "\",\n" +
-                "  \"name\": \"" + name + "\"\n" +
-                "}";
-        return sendRegisterRequest(requestBody);
+        SignUpRequest signUpRequest = new SignUpRequest(email, password, name);
+        return sendRegisterRequest(signUpRequest);
     }
 
     @Step("Отправка запроса на регистрацию пользователя")
-    public Response sendRegisterRequest(String requestBody) {
+    public Response sendRegisterRequest(SignUpRequest requestBody) {
         return given()
                 .contentType(ContentType.JSON)
                 .body(requestBody)
@@ -85,7 +75,7 @@ public class CreateUserTest {
     }
 
     @Step("Авторизация пользователя")
-    public Response loginUser(String requestBody) {
+    public Response loginUser(LoginRequest requestBody) {
         return given()
                 .contentType(ContentType.JSON)
                 .body(requestBody)
